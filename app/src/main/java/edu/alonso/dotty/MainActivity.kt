@@ -1,5 +1,8 @@
 package edu.alonso.dotty
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
+import android.animation.ObjectAnimator
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
@@ -53,7 +56,24 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun newGameClick() {
-        startNewGame()
+        // Animate down off screen
+        val screenHeight = this.window.decorView.height.toFloat()
+        val moveBoardOff = ObjectAnimator.ofFloat(
+            dotsView, "translationY", screenHeight)
+        moveBoardOff.duration = 700
+        moveBoardOff.start()
+
+        moveBoardOff.addListener(object : AnimatorListenerAdapter() {
+            override fun onAnimationEnd(animation: Animator) {
+                startNewGame()
+
+                // Animate from above the screen down to default location
+                val moveBoardOn = ObjectAnimator.ofFloat(
+                    dotsView, "translationY", -screenHeight, 0f)
+                moveBoardOn.duration = 700
+                moveBoardOn.start()
+            }
+        })
     }
 
     private fun startNewGame() {
