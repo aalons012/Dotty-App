@@ -51,6 +51,22 @@ class DotsView(context: Context, attrs: AttributeSet) :
         // Get an animation to make selected dots disappear
         animationList.add(getDisappearingAnimator())
 
+
+        for (dot in dotsGame.lowestSelectedDots) {
+            var rowsToMove = 1
+            for (row in dot.row - 1 downTo 0) {
+                val dotToMove = dotsGame.getDot(row, dot.col)
+                dotToMove?.let {
+                    if (it.isSelected) {
+                        rowsToMove++
+                    } else {
+                        val targetY = it.centerY + rowsToMove * cellHeight
+                        animationList.add(getFallingAnimator(it, targetY))
+                    }
+                }
+            }
+        }
+
         // Play animations (just one right now) together, then reset radius to full size
         animatorSet = AnimatorSet()
         animatorSet.playTogether(animationList)
@@ -159,6 +175,17 @@ class DotsView(context: Context, attrs: AttributeSet) :
                 }
             }
         }
+    }
+
+    private fun getFallingAnimator(dot: Dot, destinationY: Float): ValueAnimator {
+        val animator = ValueAnimator.ofFloat(dot.centerY, destinationY)
+        animator.duration = 300
+        animator.interpolator = BounceInterpolator()
+        animator.addUpdateListener { animation: ValueAnimator ->
+            dot.centerY = animation.animatedValue as Float
+            invalidate()
+        }
+        return animator
     }
 }
 
