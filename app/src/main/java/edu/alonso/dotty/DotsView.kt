@@ -1,5 +1,10 @@
 package edu.alonso.dotty
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
+import android.animation.AnimatorSet
+import android.animation.ValueAnimator
+import android.view.animation.AccelerateInterpolator
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
@@ -34,6 +39,40 @@ class DotsView(context: Context, attrs: AttributeSet) :
     init {
         pathPaint.strokeWidth = 10f
         pathPaint.style = Paint.Style.STROKE
+    }
+
+    private var animatorSet = AnimatorSet()
+
+    fun animateDots() {
+
+        // For storing multiple animations
+        val animationList = mutableListOf<Animator>()
+
+        // Get an animation to make selected dots disappear
+        animationList.add(getDisappearingAnimator())
+
+        // Play animations (just one right now) together, then reset radius to full size
+        animatorSet = AnimatorSet()
+        animatorSet.playTogether(animationList)
+        animatorSet.addListener(object : AnimatorListenerAdapter() {
+            override fun onAnimationEnd(animation: Animator) {
+                resetDots()
+            }
+        })
+        animatorSet.start()
+    }
+
+    private fun getDisappearingAnimator(): ValueAnimator {
+        val animator = ValueAnimator.ofFloat(1f, 0f)
+        animator.duration = 100
+        animator.interpolator = AccelerateInterpolator()
+        animator.addUpdateListener { animation: ValueAnimator ->
+            for (dot in dotsGame.selectedDots) {
+                dot.radius = DOT_RADIUS * animation.animatedValue as Float
+            }
+            invalidate()
+        }
+        return animator
     }
 
     override fun onSizeChanged(width: Int, height: Int, oldWidth: Int, oldHeight: Int) {
