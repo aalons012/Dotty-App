@@ -56,6 +56,12 @@ class MainActivity : AppCompatActivity() {
             // Display changes to the game
             dotsView.invalidate()
         }
+
+        override fun onAnimationFinished() {
+            dotsGame.finishMove()
+            dotsView.invalidate()
+            updateMovesAndScore()
+        }
     }
 
     private fun newGameClick() {
