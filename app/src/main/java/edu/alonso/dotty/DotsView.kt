@@ -25,6 +25,7 @@ class DotsView(context: Context, attrs: AttributeSet) :
 
     interface DotsGridListener {
         fun onDotSelected(dot: Dot, status: DotSelectionStatus)
+        fun onAnimationFinished()
     }
 
     private val dotsGame = DotsGame.getInstance()
@@ -73,6 +74,7 @@ class DotsView(context: Context, attrs: AttributeSet) :
         animatorSet.addListener(object : AnimatorListenerAdapter() {
             override fun onAnimationEnd(animation: Animator) {
                 resetDots()
+                gridListener?.onAnimationFinished()
             }
         })
         animatorSet.start()
