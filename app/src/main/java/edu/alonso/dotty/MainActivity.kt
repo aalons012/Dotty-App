@@ -17,6 +17,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var movesRemainingTextView: TextView
     private lateinit var scoreTextView: TextView
 
+    private lateinit var soundEffects: SoundEffects
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -29,17 +32,33 @@ class MainActivity : AppCompatActivity() {
 
         dotsView.setGridListener(gridListener)
 
+        soundEffects = SoundEffects.getInstance(applicationContext)
+
         startNewGame()
     }
 
-    private val gridListener = object : DotsGridListener {
+    override fun onDestroy() {
+        super.onDestroy()
+        soundEffects.release()
+    }
+
+        private val gridListener = object : DotsGridListener {
         override fun onDotSelected(dot: Dot, status: DotSelectionStatus) {
             // Ignore selections when game is over
             if (dotsGame.isGameOver) return
 
+            // Play first tone when first dot is selected
+            if (status == DotSelectionStatus.First) {
+                soundEffects.resetTones()
+            }
+
             // Add/remove dot to/from selected dots
             val addStatus = dotsGame.processDot(dot)
-
+            if (addStatus == DotStatus.Added){
+                soundEffects.playTone(true)
+            } else if (addStatus == DotStatus.Removed){
+                soundEffects.playTone(false)
+            }
             // If done selecting dots then replace selected dots and display new moves and score
             if (status === DotSelectionStatus.Last) {
                 if (dotsGame.selectedDots.size > 1) {
@@ -61,6 +80,10 @@ class MainActivity : AppCompatActivity() {
             dotsGame.finishMove()
             dotsView.invalidate()
             updateMovesAndScore()
+            if(dotsGame.isGameOver){
+                soundEffects.playGameOver()
+
+            }
         }
     }
 
