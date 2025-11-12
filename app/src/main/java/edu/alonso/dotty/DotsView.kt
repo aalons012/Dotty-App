@@ -1,4 +1,125 @@
 package edu.alonso.dotty
 
-class DotsView {
+import android.annotation.SuppressLint
+import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Path
+import android.util.AttributeSet
+import android.view.View
+import android.view.MotionEvent
+
+enum class DotSelectionStatus {
+    First, Additional, Last
 }
+
+const val DOT_RADIUS = 40f
+
+class DotsView(context: Context, attrs: AttributeSet) :
+    View(context, attrs) {
+
+    interface DotsGridListener {
+        fun onDotSelected(dot: Dot, status: DotSelectionStatus)
+    }
+
+    private val dotsGame = DotsGame.getInstance()
+    private val dotPath = Path()
+    private var gridListener: DotsGridListener? = null
+    private val dotColors = resources.getIntArray(R.array.dotColors)
+    private var cellWidth = 0
+    private var cellHeight = 0
+    private val dotPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val pathPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+
+    init {
+        pathPaint.strokeWidth = 10f
+        pathPaint.style = Paint.Style.STROKE
+    }
+
+    override fun onSizeChanged(width: Int, height: Int, oldWidth: Int, oldHeight: Int) {
+        val boardWidth = width - paddingLeft - paddingRight
+        val boardHeight = height - paddingTop - paddingBottom
+        cellWidth = boardWidth / GRID_SIZE
+        cellHeight = boardHeight / GRID_SIZE
+        resetDots()
+    }
+
+    override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
+
+        // Draw dots
+        for (row in 0 until GRID_SIZE) {
+            for (col in 0 until GRID_SIZE) {
+                dotsGame.getDot(row, col)?.let {
+                    dotPaint.color = dotColors[it.color]
+                    canvas.drawCircle(it.centerX, it.centerY, it.radius, dotPaint)
+                }
+            }
+        }
+
+        // Draw connector between selected dots
+        val selectedDots = dotsGame.selectedDots
+        if (selectedDots.isNotEmpty()) {
+            dotPath.reset()
+            var dot = selectedDots[0]
+            dotPath.moveTo(dot.centerX, dot.centerY)
+            for (i in 1 until selectedDots.size) {
+                dot = selectedDots[i]
+                dotPath.lineTo(dot.centerX, dot.centerY)
+            }
+            pathPaint.color = dotColors[dot.color]
+            canvas.drawPath(dotPath, pathPaint)
+        }
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+
+        // Only execute when a listener exists
+        if (gridListener == null) return true
+
+        // Determine which dot is touched
+        val col = event.x.toInt() / cellWidth
+        val row = event.y.toInt() / cellHeight
+        var selectedDot = dotsGame.getDot(row, col)
+
+        // Return previously selected dot if touch moves outside the grid
+        if (selectedDot == null) {
+            selectedDot = dotsGame.lastSelectedDot
+        }
+
+        // Notify activity that a dot is selected
+        if (selectedDot != null) {
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    gridListener!!.onDotSelected(selectedDot, DotSelectionStatus.First)
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    gridListener!!.onDotSelected(selectedDot, DotSelectionStatus.Additional)
+                }
+                MotionEvent.ACTION_UP -> {
+                    gridListener!!.onDotSelected(selectedDot, DotSelectionStatus.Last)
+                }
+            }
+        }
+
+        return true
+    }
+
+    fun setGridListener(gridListener: DotsGridListener) {
+        this.gridListener = gridListener
+    }
+
+    private fun resetDots() {
+        for (row in 0 until GRID_SIZE) {
+            for (col in 0 until GRID_SIZE) {
+                dotsGame.getDot(row, col)?.let {
+                    it.radius = DOT_RADIUS
+                    it.centerX = col * cellWidth + cellWidth / 2f
+                    it.centerY = row * cellHeight + cellHeight / 2f
+                }
+            }
+        }
+    }
+}
+
