@@ -43,8 +43,11 @@ class MainActivity : AppCompatActivity() {
             // If done selecting dots then replace selected dots and display new moves and score
             if (status === DotSelectionStatus.Last) {
                 if (dotsGame.selectedDots.size > 1) {
-                    dotsGame.finishMove()
-                    updateMovesAndScore()
+                    dotsView.animateDots()
+
+                    // These methods must be called AFTER the animation completes
+                    // dotsGame.finishMove()
+                    // updateMovesAndScore()
                 } else {
                     dotsGame.clearSelectedDots()
                 }
