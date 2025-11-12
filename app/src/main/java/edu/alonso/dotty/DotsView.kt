@@ -113,24 +113,28 @@ class DotsView(context: Context, attrs: AttributeSet) :
                 }
             }
         }
-
-        // Draw connector between selected dots
-        val selectedDots = dotsGame.selectedDots
-        if (selectedDots.isNotEmpty()) {
-            dotPath.reset()
-            var dot = selectedDots[0]
-            dotPath.moveTo(dot.centerX, dot.centerY)
-            for (i in 1 until selectedDots.size) {
-                dot = selectedDots[i]
-                dotPath.lineTo(dot.centerX, dot.centerY)
+        if (!animatorSet.isRunning) {
+            // Draw connector between selected dots
+            val selectedDots = dotsGame.selectedDots
+            if (selectedDots.isNotEmpty()) {
+                dotPath.reset()
+                var dot = selectedDots[0]
+                dotPath.moveTo(dot.centerX, dot.centerY)
+                for (i in 1 until selectedDots.size) {
+                    dot = selectedDots[i]
+                    dotPath.lineTo(dot.centerX, dot.centerY)
+                }
+                pathPaint.color = dotColors[dot.color]
+                canvas.drawPath(dotPath, pathPaint)
             }
-            pathPaint.color = dotColors[dot.color]
-            canvas.drawPath(dotPath, pathPaint)
         }
     }
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
+
+        // Only execute when a listener exists and the animations aren't running
+        if (gridListener == null || animatorSet.isRunning) return true
 
         // Only execute when a listener exists
         if (gridListener == null) return true
