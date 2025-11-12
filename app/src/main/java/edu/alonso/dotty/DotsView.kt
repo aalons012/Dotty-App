@@ -13,6 +13,7 @@ import android.graphics.Path
 import android.util.AttributeSet
 import android.view.View
 import android.view.MotionEvent
+import android.view.animation.BounceInterpolator
 
 enum class DotSelectionStatus {
     First, Additional, Last
